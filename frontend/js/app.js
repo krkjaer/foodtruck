@@ -128,6 +128,7 @@ $(function() {
 			google.maps.event.addListener(this.map, 'dragend', function() {
 				_self.renderFoodTrucks();
 			});
+			this.renderFoodTrucks();
 			return this;
 		},
 		
