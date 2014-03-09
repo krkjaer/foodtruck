@@ -87,7 +87,7 @@ app.all('/*', function (req, res, next) {
 /* An explanatory index */
 app.get('/', function(req, res) {
 	console.log('/');
-	res.send('Use /foodtrucks to retrieve all data');
+	res.send('Use /foodtrucks to retrieve all data on foodtrucks and /fooditems to retrieve a list of available food');
 });
 
 app.get('/foodtrucks', function(req, res) {
