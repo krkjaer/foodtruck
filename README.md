@@ -38,6 +38,7 @@ Since the purpose of this software is mainly to try out Backbone.js and node.js,
 *  Provide a suitable styling for mobile/touch devices
 *  Use geolocation to center the map
 *  Use another icon for the trucks
+*  Allow some filtering in the backend based on location, to avoid retrieving the entire list
 
 Known issues
 ------
