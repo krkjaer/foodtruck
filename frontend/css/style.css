@@ -1,4 +1,13 @@
-div#map {
-	width:500px;
-	height: 500px;
+div.map {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+
+div.filters {
+	position: absolute;
+	top: 0 px;
+	right: 0px;
 }
