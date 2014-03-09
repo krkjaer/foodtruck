@@ -2,6 +2,7 @@ Foodtruck
 =========
 
 This is a small sample project written with node.js and Backbone.js that provides the location of Food Trucks in San Francisco, and allows the user to filter them based on the type of food they provide.
+When access, the app attempts to locate the user. If this fails, it simple centers on San Francisco.
 
 Technical choices
 -----------------
@@ -36,7 +37,6 @@ Room for improvement
 Since the purpose of this software is mainly to try out Backbone.js and node.js, the implementation has several obvious areas that are ripe for improvement. Some low-hanging fruits are:
 
 *  Provide a suitable styling for mobile/touch devices
-*  Use geolocation to center the map
 *  Use another icon for the trucks
 *  Allow some filtering in the backend based on location, to avoid retrieving the entire list
 
@@ -44,5 +44,6 @@ Known issues
 ------
 There are a couple of known issues:
 
-* The markers appear to be slightly off, compared to where you would expect them to be.
+* The markers appear to be slightly off, compared to where you would expect them to be. A single marker is shown at (0,0). 
 * For some reason, the app tends to crash Mobile Safari.
+* Some dates appear not to be parsed correctly

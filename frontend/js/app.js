@@ -33,15 +33,6 @@ $(function() {
 				schedulelink: truck.schedulelink
 			};
 		},
-		
-		// TODO: This should really not be in the model
-		infoText: function() {
-			return 'Do not use this';
-		},
-		
-		isWithin: function() {
-			return true;
-		}
 	});
 	
 	/* A collection of food trucks */
@@ -84,6 +75,9 @@ $(function() {
 			this.filterView = new FiltersView();
 			this.filterView.parentView = this;
 			this.infowindow = new google.maps.InfoWindow();
+			
+			this.latitude = opts.latitude;
+			this.longitude = opts.longitude;
 				
 			/* Create the foodtruck marker when it is added to the foodtruck list */
 			this.collection.on("add", function(truck) {
@@ -101,7 +95,7 @@ $(function() {
 					// Get template for info window content
 					var template = _.template($('#infoText').html(), { truck: truck });
 					_self.infowindow.setContent(template); // TODO: Scope
-					_self.infowindow.open(App.map, marker); // TODO: Scope
+					_self.infowindow.open(_self.map, marker); // TODO: Scope
 				});	
 				truck.marker = marker;
 			}, this);
@@ -110,11 +104,6 @@ $(function() {
 			
 			this.render();
 		},
-		
-		// Default position of map - potentially, we could get these from
-		// the users location
-		latitude: 37.78,
-		longitude: -122.398,
 		
 		render: function() {
 			var lat = this.latitude;
@@ -165,5 +154,23 @@ $(function() {
 		}
 	});
 	
-	var App = new FoodTrucksView();
+	// Retrieve position and show map
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(showPosition, handleError)
+	} else {
+		handleError();
+	}
+
+	function handleError(error)
+	{
+		// No geolocation - so use default position
+		var App = new FoodTrucksView({latitude: 37.78, 
+									 longitude: -122.398});
+	}
+	
+	function showPosition(position)
+	{
+		var App = new FoodTrucksView({latitude: position.coords.latitude, 
+									  longitude: position.coords.longitude})
+	}
 })
