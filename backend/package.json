@@ -1,0 +1,9 @@
+{
+    "name": "sf-food-trucks",
+    "description": "Food Trucks on San Francisco",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "express": "3.x",
+    }
+}
