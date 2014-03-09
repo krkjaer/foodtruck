@@ -1,5 +1,21 @@
 $(function() {
-	/* Model */		
+	/* Model */	
+	var Filter = Backbone.Model.extend({
+		parse: function (item) {
+			return {
+				item: item
+			};
+		}
+	});
+	
+	var FilterList = Backbone.Collection.extend({
+		model: Filter,
+		url: 'http://localhost:5000/fooditems',
+		parse: function(response) {
+			return response.fooditems;
+		}
+	});
+	
 	var FoodTruck = Backbone.Model.extend({		
 		parse: function(truck) {
 			return {
@@ -20,8 +36,7 @@ $(function() {
 		
 		// TODO: This should really not be in the model
 		infoText: function() {
-			return "<h3>" + this.get('applicant') + "</h3>" + 
-			"<h4>" + this.get('locationdescription') + "</h4>";
+			return 'Do not use this';
 		},
 		
 		isWithin: function() {
@@ -36,11 +51,39 @@ $(function() {
 	});
 		
 	/* Views */
+	
+	var FiltersView = Backbone.View.extend({
+		el: $('#filter-element'),
+		
+		events: {
+			'change #filter-selector' : 'filterChanged'
+		},
+		
+		filterChanged: function(e) {
+			this.parentView.filterChanged($('#filter-selector').val());
+		},
+	
+		initialize: function(opts) {
+			this.collection = new FilterList();
+			this.collection.on('reset', this.render, this);
+			this.collection.fetch({reset: true});
+			this.setElement($('#filter-element'))
+		},
+		
+		render: function() {
+			var template = _.template($('#filter-optionset').html(), {options: this.collection.models});
+			this.$el.html(template);
+		}
+	});
+	
 	var FoodTrucksView = Backbone.View.extend({
+		el: $('#map-element'),
+	
 		initialize: function(opts) {
 			this.collection = new FoodTruckList();
+			this.filterView = new FiltersView();
+			this.filterView.parentView = this;
 			this.infowindow = new google.maps.InfoWindow();
-			this.setElement($('#map-element'));
 				
 			/* Create the foodtruck marker when it is added to the foodtruck list */
 			this.collection.on("add", function(truck) {
@@ -53,18 +96,21 @@ $(function() {
 				
 				/* Add a listener to the marker */
 				google.maps.event.addListener(marker, 'click', function() {
-					App.infowindow.setContent(truck.infoText()); // TODO: Scope
+					// Get template for info window content
+					var template = _.template($('#infoText').html(), { truck: truck });
+					App.infowindow.setContent(template); // TODO: Scope
 					App.infowindow.open(App.map, marker); // TODO: Scope
 				});	
 				truck.marker = marker;
 			});
 			
-			//_.bindAll(this, 'render'); // TODO: What is the purpose of this?
 			this.collection.fetch({remove: false});
+			
 			this.render();
 		},
 		
-		// Temporary - these will become default when we cannot get the users position
+		// Default position of map - potentially, we could get these from
+		// the users location
 		latitude: 37.77,
 		longitude: -122.42,
 		
@@ -102,18 +148,22 @@ $(function() {
 		renderFoodTrucks: function () {
 			var bounds = App.map.getBounds();
 			App.collection.each(function(truck) {
-				if (bounds && truck.marker && bounds.contains(truck.latlng)) {
-					if (!truck.marker) {
-						
+				if (bounds && bounds.contains(truck.latlng)) {
+					if ( App.filter && App.filter != "all" 
+							&& truck.get('fooditems').indexOf(App.filter) < 0 ) {
+						truck.marker.setVisible(false)
 					} else {
 						truck.marker.setVisible(true);
 					}
 				} else {
-					if (truck.marker) {
-						truck.marker.setVisible(false);
-					}
+					truck.marker.setVisible(false);
 				}
 			});
+		},
+		
+		filterChanged: function(value) {
+			this.filter = value;
+			App.renderFoodTrucks();
 		}
 	});
 	
