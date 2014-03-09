@@ -155,23 +155,18 @@ $(function() {
 		}
 	});
 	
-	// Retrieve position and show map
-	if (navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(showPosition, handleError)
-	} else {
-		handleError();
-	}
+	/* Create app with default coordinates */
+	var App = new FoodTrucksView({latitude: 37.78, longitude: -122.398});
 
-	function handleError(error)
-	{
-		// No geolocation - so use default position
-		var App = new FoodTrucksView({latitude: 37.78, 
-									 longitude: -122.398});
-	}
-	
+	// Attempt to get user location
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(showPosition)
+	} 
+
 	function showPosition(position)
 	{
-		var App = new FoodTrucksView({latitude: position.coords.latitude, 
-									  longitude: position.coords.longitude})
+		var center = new google.maps.LatLng(position.coords.latitude,
+										   position.coords.longitude);
+		App.map.panTo(center);
 	}
 })
