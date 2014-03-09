@@ -37,20 +37,39 @@ function splitFoodItems(foodItems) {
 	if (foodItems)
 		items = foodItems.split(':');
 		
+	// Add all items to the item-list, but do a bit of cleanup first
 	for (var i = 0; i<items.length;i++) {
 		var item = items[i].trim();
+		if (item.charAt(item.length -1) === ".")
+			item = item.slice(0,-1);
 		if (item != "")
-			result.push(item);
+			result.push(item.toLowerCase());
 	}
 	
 	return result;
 }
+
+/* Create a unique list of fooditems */
+function createItemList() {
+	global.fooditems = new Array();
+	for(var i=0;i<global.data.length;i++) {
+		if(global.data[i].expirationdate > new Date()) {
+			for(var j=0;j<global.data[i].fooditems.length;j++) {
+				if(global.fooditems.indexOf(global.data[i].fooditems[j]) < 0) {
+					global.fooditems.push(global.data[i].fooditems[j]);
+				}
+			}
+		}
+	}
+	global.fooditems.sort();
+};
 
 fs.readFile(file, 'utf8', function(err, data) {
 	if (err) throw err;
 	try {
 		var data = JSON.parse(data);
 		global.data = parse(data.data);
+		createItemList();
 	} catch (e) {
 		console.error('Parsing error:', e);
 	}
@@ -75,8 +94,16 @@ app.get('/foodtrucks', function(req, res) {
 	// TODO: Check filter
 	console.log('/foodtrucks');
 	res.jsonp(global.data.filter(function(item) {
+		/* console.log("Expires: " + item.expirationdate);
+		console.log("Now: " + new Date());
+		console.log(item.expirationdate > new Date()); */
 		return item.expirationdate > new Date();
 	}));
+});
+
+app.get('/fooditems', function(req, res) {
+	console.log('/fooditems');
+	res.jsonp({fooditems: global.fooditems});
 });
 
 app.listen(5000);
