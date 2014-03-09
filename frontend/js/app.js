@@ -10,7 +10,7 @@ $(function() {
 	
 	var FilterList = Backbone.Collection.extend({
 		model: Filter,
-		url: 'http://localhost:5000/fooditems',
+		url: 'http://foodtrucks-krkjaer.rhcloud.com/fooditems',
 		parse: function(response) {
 			return response.fooditems;
 		}
@@ -47,7 +47,7 @@ $(function() {
 	/* A collection of food trucks */
 	var FoodTruckList = Backbone.Collection.extend({ 
 		model: FoodTruck,
-		url: 'http://localhost:5000/foodtrucks',
+		url: 'http://foodtrucks-krkjaer.rhcloud.com/foodtrucks',
 	});
 		
 	/* Views */
@@ -90,19 +90,21 @@ $(function() {
 				truck.latlng = new google.maps.LatLng(truck.get('position').lat, truck.get('position').lng);
 				var marker = new google.maps.Marker({
 									position: truck.latlng,
-									map: App.map, // TODO: This is _not_ how to do it
-									title: truck.get('applicant')
+									map: this.map, // TODO: This is _not_ how to do it
+									title: truck.get('applicant'),
+									visible: false
 								});
 				
 				/* Add a listener to the marker */
+				var _self = this;
 				google.maps.event.addListener(marker, 'click', function() {
 					// Get template for info window content
 					var template = _.template($('#infoText').html(), { truck: truck });
-					App.infowindow.setContent(template); // TODO: Scope
-					App.infowindow.open(App.map, marker); // TODO: Scope
+					_self.infowindow.setContent(template); // TODO: Scope
+					_self.infowindow.open(App.map, marker); // TODO: Scope
 				});	
 				truck.marker = marker;
-			});
+			}, this);
 			
 			this.collection.fetch({remove: false});
 			
@@ -111,15 +113,15 @@ $(function() {
 		
 		// Default position of map - potentially, we could get these from
 		// the users location
-		latitude: 37.77,
-		longitude: -122.42,
+		latitude: 37.78,
+		longitude: -122.398,
 		
 		render: function() {
 			var lat = this.latitude;
 			var lng = this.longitude;
 			var latlong = new google.maps.LatLng(lat, lng);
 			var options = {
-				zoom: 14,
+				zoom: 16,
 				center: latlong,
 				mapTypeId:google.maps.MapTypeId.ROADMAP,
 				mapTypeControl:false,
@@ -127,30 +129,26 @@ $(function() {
 			};
 			this.map = new google.maps.Map(this.el,options);
 			/* Google map events */
+			_self = this;
 			google.maps.event.addListener(this.map, 'tilesloaded', function() {
-				App.renderFoodTrucks();
+				_self.renderFoodTrucks();
 			});
 			google.maps.event.addListener(this.map, 'zoom_changed', function() {
-				App.renderFoodTrucks();
+				_self.renderFoodTrucks();
 			});
 			google.maps.event.addListener(this.map, 'dragend', function() {
-				App.renderFoodTrucks();
+				_self.renderFoodTrucks();
 			});
-			
-			/* var marker = new google.maps.Marker({ // TODO: This should be animated, and use a different icon
-					position: latlong,
-					map: this.map,
-					title: "You are here"
-				}); */
 			return this;
 		},
 		
 		renderFoodTrucks: function () {
-			var bounds = App.map.getBounds();
-			App.collection.each(function(truck) {
+			var bounds = this.map.getBounds();
+			_self = this;
+			this.collection.each(function(truck) {
 				if (bounds && bounds.contains(truck.latlng)) {
-					if ( App.filter && App.filter != "all" 
-							&& truck.get('fooditems').indexOf(App.filter) < 0 ) {
+					if ( _self.filter && _self.filter != "all" 
+							&& truck.get('fooditems').indexOf(_self.filter) < 0 ) {
 						truck.marker.setVisible(false)
 					} else {
 						truck.marker.setVisible(true);
@@ -163,7 +161,7 @@ $(function() {
 		
 		filterChanged: function(value) {
 			this.filter = value;
-			App.renderFoodTrucks();
+			this.renderFoodTrucks();
 		}
 	});
 	
