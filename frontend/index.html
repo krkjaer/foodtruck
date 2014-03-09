@@ -28,6 +28,7 @@
 	<script type='text/template' id='infoText'>
 		<h3><%=truck.get('applicant')%></h3> 
 		<h4><%=truck.get('locationdescription')%></h4>
+		<h4><a href=<%=truck.get('schedulelink')%>>Schedule</a><h4>
 		<h4>Available food</h4>
 		<ul>
 			<% _.each(truck.get('fooditems'), function(fooditem) { %>
