@@ -1,81 +1,67 @@
 $(function() {
-	/* Model - A single Food Truck item */
-	var FoodTruck = Backbone.Model.extend({
-		defaults: function() {
+	/* Model */		
+	var FoodTruck = Backbone.Model.extend({		
+		parse: function(truck) {
 			return {
-				objectid: '',
-				applicant: '',
-				facilitytype: '',
-				locationdescription: '',
-				address: '',
-				status: '',
-				fooditems: new Array(),
-				latitude: 0,
-				longitude: 0,
-				schedulelink: ''
+				objectid: truck.objectid,
+				applicant: truck.applicant,
+				facilitytype: truck.facilitytype,
+				locationdescription: truck.locationdescription,
+				address: truck.address,
+				status: truck.status,
+				fooditems: truck.fooditems,
+				position: {
+					lat: truck.latitude,
+					lng: truck.longitude
+				},
+				schedulelink: truck.schedulelink
 			};
 		},
 		
-		isWithin: function(map) {
-			return true; // TODO: Determine if this model is visibl
+		// TODO: This should really not be in the model
+		infoText: function() {
+			return "<h3>" + this.get('applicant') + "</h3>" + 
+			"<h4>" + this.get('locationdescription') + "</h4>";
+		},
+		
+		isWithin: function() {
+			return true;
 		}
 	});
 	
 	/* A collection of food trucks */
 	var FoodTruckList = Backbone.Collection.extend({ 
 		model: FoodTruck,
-		
 		url: 'http://localhost:5000/foodtrucks',
-		
-		visible: function(map) {
-			return this;
-		}
 	});
 		
 	/* Views */
-	var TruckView = Backbone.View.extend({
-		initialize: function(opts) {
-			// TODO: Set element
-			this.options = {
-				position: new google.maps.LatLng(this.model.get('latitude'),
-												 this.model.get('longitude')),
-				map: null,
-				title: this.model.get('applicant')
-			};
-			
-			this.infoText = "<h3>" + truck.get('applicant') + "</h3>" + 
-			"<h4>" + truck.get('locationdescription') + "</h4>";
-		},
-		
-		render: function(){
-			google.maps.event.addListener(marker, 'click', function() {
-    				App.infowindow.setContent(infoText(truck)); // TODO: Scope
-    				App.infowindow.open(App.map, marker); // TODO: Scope
-    			});			
-			return this;
-		}
-	});
-	
 	var FoodTrucksView = Backbone.View.extend({
 		initialize: function(opts) {
 			this.collection = new FoodTruckList();
 			this.infowindow = new google.maps.InfoWindow();
+			this.setElement($('#map-element'));
 				
-			/* Render the foodtruck marker when it is added to the foodtruck list */
+			/* Create the foodtruck marker when it is added to the foodtruck list */
 			this.collection.on("add", function(truck) {
-				if (truck.isWithin(App.Map)) {
-					var latlng = new google.maps.LatLng(truck.get('latitude'), truck.get('longitude'));
-					var marker = new google.maps.Marker({
-						position: latlng,
-						map: App.map, // TODO: This is _not_ how to do it
-						title: truck.get('applicant')
-					});
-				truck.marker = marker; // So we can find it if we remove it.
-				}
+				truck.latlng = new google.maps.LatLng(truck.get('position').lat, truck.get('position').lng);
+				var marker = new google.maps.Marker({
+									position: truck.latlng,
+									map: App.map, // TODO: This is _not_ how to do it
+									title: truck.get('applicant')
+								});
+				
+				/* Add a listener to the marker */
+				google.maps.event.addListener(marker, 'click', function() {
+					App.infowindow.setContent(truck.infoText()); // TODO: Scope
+					App.infowindow.open(App.map, marker); // TODO: Scope
+				});	
+				truck.marker = marker;
 			});
 			
-			_.bindAll(this, 'render');
+			//_.bindAll(this, 'render'); // TODO: What is the purpose of this?
 			this.collection.fetch({remove: false});
+			this.render();
 		},
 		
 		// Temporary - these will become default when we cannot get the users position
@@ -83,7 +69,6 @@ $(function() {
 		longitude: -122.42,
 		
 		render: function() {
-			var mapElement = document.getElementById('mapHolder');
 			var lat = this.latitude;
 			var lng = this.longitude;
 			var latlong = new google.maps.LatLng(lat, lng);
@@ -94,19 +79,17 @@ $(function() {
 				mapTypeControl:false,
 				navigationControlOptions:{style:google.maps.NavigationControlStyle.SMALL} 
 			};
-			this.map = new google.maps.Map(mapElement,options);
+			this.map = new google.maps.Map(this.el,options);
 			/* Google map events */
 			google.maps.event.addListener(this.map, 'tilesloaded', function() {
-				//this.renderVisible();
+				App.renderFoodTrucks();
 			});
 			google.maps.event.addListener(this.map, 'zoom_changed', function() {
-				this.bounds = App.map.getBounds(); // TODO: Change model state
+				App.renderFoodTrucks();
 			});
 			google.maps.event.addListener(this.map, 'dragend', function() {
-				this.bounds = App.map.getBounds(); // TODO: Change model state
+				App.renderFoodTrucks();
 			});
-			
-				
 			
 			/* var marker = new google.maps.Marker({ // TODO: This should be animated, and use a different icon
 					position: latlong,
@@ -115,13 +98,24 @@ $(function() {
 				}); */
 			return this;
 		},
-		renderVisible: function() {
-			this.collection.each()(function (truck) {
-			
+		
+		renderFoodTrucks: function () {
+			var bounds = App.map.getBounds();
+			App.collection.each(function(truck) {
+				if (bounds && truck.marker && bounds.contains(truck.latlng)) {
+					if (!truck.marker) {
+						
+					} else {
+						truck.marker.setVisible(true);
+					}
+				} else {
+					if (truck.marker) {
+						truck.marker.setVisible(false);
+					}
+				}
 			});
 		}
 	});
 	
 	var App = new FoodTrucksView();
-	App.render();
 })

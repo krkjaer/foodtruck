@@ -3,7 +3,6 @@ if (!global) var global = this;
 var express = require('express');
 var fs = require('fs');
 var file = __dirname + '/foodtrucks.json';
-var data = new Array();
 
 function parse (data) {
 	var parsedData = new Array();
@@ -26,7 +25,7 @@ function toFoodTruck(truck) {
 			latitude: truck[22],
 			longitude: truck[23],
 			schedulelink: truck[24],
-			/* TODO: For now - happily ignore timezones */
+			/* For now, we happily ignore timezones */
 			expirationdate: new Date(truck[29])
 		};
 	return item;
@@ -34,21 +33,22 @@ function toFoodTruck(truck) {
 
 function splitFoodItems(foodItems) {
 	var items = new Array();
+	var result = new Array();
 	if (foodItems)
 		items = foodItems.split(':');
 		
 	for (var i = 0; i<items.length;i++) {
-		items[i] = items[i].trim();
+		var item = items[i].trim();
+		if (item != "")
+			result.push(item);
 	}
 	
-	return items;
+	return result;
 }
 
 fs.readFile(file, 'utf8', function(err, data) {
-	console.log('Reading file ');
 	if (err) throw err;
 	try {
-		console.log('Reading data');
 		var data = JSON.parse(data);
 		global.data = parse(data.data);
 	} catch (e) {
@@ -60,7 +60,6 @@ var app = express();
 
 /* Allow cross-domain origin */
 app.all('/*', function (req, res, next) {
-	console.log('headers');
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Acces-Control-Allow-Headers', 'X-Requested-With')
 	next();
@@ -68,13 +67,15 @@ app.all('/*', function (req, res, next) {
 
 /* An explanatory index */
 app.get('/', function(req, res) {
-	res.send('');
+	console.log('/');
+	res.send('Use /foodtrucks to retrieve all data');
 });
 
 app.get('/foodtrucks', function(req, res) {
-	console.log('sending data');
+	// TODO: Check filter
+	console.log('/foodtrucks');
 	res.jsonp(global.data.filter(function(item) {
-		return true; // TODO: Filter by expiration date
+		return item.expirationdate > new Date();
 	}));
 });
 
